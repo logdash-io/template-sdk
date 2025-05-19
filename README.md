@@ -28,13 +28,13 @@ As an SDK maintainer, your responsibilities may include:
 
 ## 🔧 Creating a Logdash Instance
 
-A typical SDK should expose a way to initialize a Logdash instance, for example:
+Our SDKs expose a way to initialize a Logdash instance:
 
 ```
 const { metrics, logger } = createLogdash({
-apiKey: 'your-api-key',
-host: '',
-verbose: false
+  apiKey: 'your-api-key',
+  host: '',
+  verbose: false
 });
 ```
 
@@ -81,13 +81,13 @@ Use the following RGB color scheme when outputting to the console:
 
 ```
 const LOG_LEVEL_COLORS: Record<LogLevel, [number, number, number]> = {
-[LogLevel.ERROR]: [231, 0, 11],
-[LogLevel.WARN]: [254, 154, 0],
-[LogLevel.INFO]: [21, 93, 252],
-[LogLevel.HTTP]: [0, 166, 166],
-[LogLevel.VERBOSE]: [0, 166, 0],
-[LogLevel.DEBUG]: [0, 166, 62],
-[LogLevel.SILLY]: [80, 80, 80],
+  [LogLevel.ERROR]: [231, 0, 11],
+  [LogLevel.WARN]: [254, 154, 0],
+  [LogLevel.INFO]: [21, 93, 252],
+  [LogLevel.HTTP]: [0, 166, 166],
+  [LogLevel.VERBOSE]: [0, 166, 0],
+  [LogLevel.DEBUG]: [0, 166, 62],
+  [LogLevel.SILLY]: [80, 80, 80],
 };
 ```
 
