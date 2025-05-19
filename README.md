@@ -4,6 +4,14 @@ Thank you for your interest in contributing to Logdash by creating a new SDK —
 
 Below you'll find a step-by-step guide to help you get started.
 
+## ✅ Code ownership and approvals
+
+All SDK repositories are hosted under the Logdash GitHub organization.
+
+As a contributor and maintainer, you will have full access to develop, maintain, and improve the SDK. However, any changes to the main branch must be reviewed and approved by the Logdash team.
+
+This policy ensures consistency, security, and quality across all SDKs.
+
 ## 📬 Initial Setup
 
 To begin:
