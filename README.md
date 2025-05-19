@@ -1,48 +1,60 @@
-# Template for creating new SDK
+# Logdash SDK Contribution Guide
 
-If you are there, you probably want to contribute to logdash and create a new SDK. Thank you for that :)
+Thank you for your interest in contributing to Logdash by creating a new SDK — we truly appreciate your support!
 
-Steps:
+Below you'll find a step-by-step guide to help you get started.
 
-- reach out to us - contact@logdash.io,
-- we as logdash org owners create public repository inside logdash org and assign you as a maintainer,
-- we as logdash org owners create account in choosen package manager (npm, pypi, nuget, etc...) and give you a token,
+## 📬 Initial Setup
 
-What needs to be done within SDK (you don't have to do every step):
+To begin:
 
-- you write SDK code,
-- you provide SDK documentation compliant with general readme. See https://github.com/logdash-io/js-sdk or https://github.com/logdash-io/python-sdk.
-  Just copy the readme and adjust parts with code to match your SDK
-- you write an instruction how to build it and deploy it,
-- you create an automatic pipeline which auto deploys the package.
+1. **Reach out to us** at [contact@logdash.io](mailto:contact@logdash.io).
+2. The Logdash team will:
+   - Create a public repository under the [Logdash GitHub organization](https://github.com/logdash-io).
+   - Assign you as a maintainer of that repository.
+   - Create an account on the relevant package registry (e.g., npm, PyPI, NuGet) and provide you with an access token.
 
-## Creating logdash instance
+## 📦 SDK Responsibilities
 
-In general we want to spawn logdash using more or less something like
+As an SDK maintainer, your responsibilities may include:
+
+- Writing the core SDK code.
+- Creating SDK documentation that follows the format of our existing SDKs:
+  - [JavaScript SDK](https://github.com/logdash-io/js-sdk)
+  - [Python SDK](https://github.com/logdash-io/python-sdk)
+  - You can copy the README and adjust the code sections as needed.
+- Writing build and deployment instructions.
+- Creating a CI/CD pipeline for automatic deployment to the relevant package manager.
+
+## 🔧 Creating a Logdash Instance
+
+A typical SDK should expose a way to initialize a Logdash instance, for example:
 
 ```
 const { metrics, logger } = createLogdash({
-  apiKey: 'your-api-key'
-  host: '',
-  verbose: ''
-})
+apiKey: 'your-api-key',
+host: '',
+verbose: false
+});
 ```
 
-Obviously this may vary due to different technologies.
+This may vary depending on the target language and ecosystem.
 
-These are parameters we use
+### Configuration Parameters
 
-| Parameter | Required | Default        | Description                                                                                                              |
-| --------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `apiKey`  | no       | -              | Api key used to authorize against logdash servers. If you don't provide one, logs will be logged into local console only |
-| `host`    | no       | api.logdash.io | Custom API host, useful with self-hosted instances                                                                       |
-| `verbose` | no       | false          | Useful for debugging purposes                                                                                            |
+| Parameter | Required | Default          | Description                                                                         |
+| --------- | -------- | ---------------- | ----------------------------------------------------------------------------------- |
+| `apiKey`  | No       | -                | API key for authentication. If omitted, logs are printed to the local console only. |
+| `host`    | No       | `api.logdash.io` | Custom API host. Useful when using self-hosted instances.                           |
+| `verbose` | No       | `false`          | Enables verbose/debug logging in the SDK itself.                                    |
 
-## Logger
+---
 
-### Methods
+## 📝 Logger
 
-Logger should expose such methods
+### Available Methods
+
+Your logger implementation should expose the following methods:
 
 ```
 error()
@@ -55,70 +67,87 @@ debug()
 silly()
 ```
 
-### Being async
+---
 
-Logger should not pause code execution. It should just execute in the "background".
+### Async Behavior
 
-### Colors
+Logging must be **non-blocking** — it should never pause or delay application execution. All operations should run in the background.
 
-Logger should log into the console. Use these colors
+---
+
+### Console Output with Colors
+
+Use the following RGB color scheme when outputting to the console:
 
 ```
 const LOG_LEVEL_COLORS: Record<LogLevel, [number, number, number]> = {
-	[LogLevel.ERROR]: [231, 0, 11],
-	[LogLevel.WARN]: [254, 154, 0],
-	[LogLevel.INFO]: [21, 93, 252],
-	[LogLevel.HTTP]: [0, 166, 166],
-	[LogLevel.VERBOSE]: [0, 166, 0],
-	[LogLevel.DEBUG]: [0, 166, 62],
-	[LogLevel.SILLY]: [80, 80, 80],
+[LogLevel.ERROR]: [231, 0, 11],
+[LogLevel.WARN]: [254, 154, 0],
+[LogLevel.INFO]: [21, 93, 252],
+[LogLevel.HTTP]: [0, 166, 166],
+[LogLevel.VERBOSE]: [0, 166, 0],
+[LogLevel.DEBUG]: [0, 166, 62],
+[LogLevel.SILLY]: [80, 80, 80],
 };
 ```
 
-### What it should actually do
+---
 
-Calling any logger method should call this endpoint https://api.logdash.io/docs#/Logs/LogCoreController_create.
+### Behavior
 
-- `createdAt` - should be set to `now()` in ISO format,
-- `message` - is the raw log message,
-- `level` - self explanatory,
-- `sequenceNumber` - you should have some sort of offline counter which increments itself by one every time you add new log. This field
-  is optional and entire API can work without it. It is here for cases when you add two logs in the exact same millisecond but log #2 arrives
-  first to the server. The smallest possible time unit by which we can order logs is millisecond so to order logs created in the same moment
-  we are batching them and "indexing" based on `sequenceNumber` each 100ms on the backend.
+Each log method should send a request to this endpoint:
 
-### Parameters parsing
+> `https://api.logdash.io/docs#/Logs/LogCoreController_create`
 
-#### Multiple params
+Payload must include:
 
-Javascript sdk supports any number of parameters, so I can call
+- `createdAt`: Current timestamp in ISO format.
+- `message`: Raw log message.
+- `level`: Log level.
+- `sequenceNumber` (optional): An incrementing local counter to help preserve log order within the same millisecond.
+
+**Note:** This field is especially useful when multiple logs are created in the same moment but delivered out of order. We batch logs every 100ms on the backend and use `sequenceNumber` to determine proper order.
+
+---
+
+### Parameter Handling
+
+#### Multiple Parameters
+
+The JavaScript SDK allows multiple parameters, e.g.:
 
 ```
-logger.log("Hello","from","logdash")
+logger.log("Hello", "from", "Logdash");
 ```
 
-and it will work. If possible, make your sdk behave the same.
+If possible, your SDK should support similar behavior.
 
-#### Stringifying params
+#### Object Serialization
 
-Javascript sdk supports passing raw objects as params and will do its best to do `JSON.stringify(param)` whenever it is possible. If your language
-let's you pass objects to params, please add serialization as well.
+JavaScript SDK automatically serializes objects using `JSON.stringify`. If your language supports it, please implement a similar mechanism to handle non-string parameters.
 
-## Metrics
+## 📈 Metrics
 
-### Methods
-
-Metrics should expose such methods
+### Available Methods
 
 ```
 set(metricName, value)
 mutate(metricName, value)
 ```
 
-### Being async
+- `set`: Assigns an absolute value to a metric.
+- `mutate`: Modifies the metric by a given delta (positive or negative).
 
-Same as logs - this should be completely non-blocking operration.
+### Async Behavior
 
-### What it should actually do
+Metric operations should also be **non-blocking**.
 
-It should call this endpoint https://api.logdash.io/docs#/Metrics/MetricCoreController_recordMetric
+### Behavior
+
+Each metric method should send data to this endpoint:
+
+> `https://api.logdash.io/docs#/Metrics/MetricCoreController_recordMetric`
+
+---
+
+If you have any questions or need support, don’t hesitate to contact us at [contact@logdash.io](mailto:contact@logdash.io). Happy coding! 🚀
