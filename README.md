@@ -27,6 +27,7 @@ To begin:
 As an SDK maintainer, your responsibilities may include:
 
 - Writing the core SDK code.
+- Writing tests, which must at least check that log and metric payloads carry `app` when it is set and leave the key out when it is not.
 - Creating SDK documentation that follows the format of our existing SDKs:
   - [JavaScript SDK](https://github.com/logdash-io/js-sdk)
   - [Python SDK](https://github.com/logdash-io/python-sdk)
@@ -41,6 +42,7 @@ Our SDKs expose a way to initialize a Logdash instance:
 ```
 const { metrics, logger } = createLogdash({
   apiKey: 'your-api-key',
+  app: 'api',
   host: '',
   verbose: false
 });
@@ -53,8 +55,13 @@ This may vary depending on the target language and ecosystem.
 | Parameter | Required | Default          | Description                                                                         |
 | --------- | -------- | ---------------- | ----------------------------------------------------------------------------------- |
 | `apiKey`  | No       | -                | API key for authentication. If omitted, logs are printed to the local console only. |
+| `app`     | No       | -                | Name of this app, for example `api` or `desktop`. Sent with every log and metric.   |
 | `host`    | No       | `api.logdash.io` | Custom API host. Useful when using self-hosted instances.                           |
 | `verbose` | No       | `false`          | Enables verbose/debug logging in the SDK itself.                                    |
+
+The domain key, passed as `apiKey`, is shared by all apps of a domain (for example a desktop app, an API and a landing page), and `app` names this one.
+Older service keys ignore `app`.
+Namespaced or child loggers inherit it.
 
 ---
 
@@ -112,9 +119,12 @@ Payload must include:
 - `createdAt`: Current timestamp in ISO format.
 - `message`: Raw log message.
 - `level`: Log level.
+- `app` (optional): The `app` option. Include the key only when `app` is set; otherwise leave it out entirely (no `null`, no empty string).
 - `sequenceNumber` (optional): An incrementing local counter to help preserve log order within the same millisecond.
 
 **Note:** This field is especially useful when multiple logs are created in the same moment but delivered out of order. We batch logs every 100ms on the backend and use `sequenceNumber` to determine proper order.
+
+If your SDK sends logs in batches with `POST /logs/batch`, every entry of the `logs` array carries `app` the same way.
 
 ---
 
@@ -155,6 +165,8 @@ Metric operations should also be **non-blocking**.
 Each metric method should send data to this endpoint:
 
 > `https://api.logdash.io/docs#/Metrics/MetricCoreController_recordMetric`
+
+As with logs, the body carries `app` only when it is set.
 
 ---
 
